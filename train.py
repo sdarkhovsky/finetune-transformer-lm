@@ -360,7 +360,7 @@ if __name__ == '__main__':
     globals().update(args.__dict__)
     random.seed(seed)
     np.random.seed(seed)
-    tf.set_random_seed(seed)
+    tf.compat.v1.set_random_seed(seed)
 
     logger = ResultLogger(path=os.path.join(log_dir, '{}.jsonl'.format(desc)), **args.__dict__)
     text_encoder = TextEncoder(encoder_path, bpe_path)
