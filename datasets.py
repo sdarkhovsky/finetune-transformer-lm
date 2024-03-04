@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 
 seed = 3535999445
 
-def _rocstories(path):
+def _rocstories(path, num_records=0):
     with open(path) as f:
         f = csv.reader(f)
         st = []
@@ -17,6 +17,8 @@ def _rocstories(path):
         ct2 = []
         y = []
         for i, line in enumerate(tqdm(list(f), ncols=80, leave=False)):
+            if num_records > 0 and i > num_records:
+                break
             if i > 0:
                 s = ' '.join(line[1:5])
                 c1 = line[5]
@@ -27,9 +29,12 @@ def _rocstories(path):
                 y.append(int(line[-1])-1)
         return st, ct1, ct2, y
 
-def rocstories(data_dir, n_train=1497, n_valid=374):
-    storys, comps1, comps2, ys = _rocstories(os.path.join(data_dir, 'cloze_test_val__spring2016 - cloze_test_ALL_val.csv'))
-    teX1, teX2, teX3, _ = _rocstories(os.path.join(data_dir, 'cloze_test_test__spring2016 - cloze_test_ALL_test.csv'))
+def rocstories(data_dir, n_train=1497, n_valid=374, num_records=0):
+    if num_records > 0:   # for debugging purposes
+        n_valid=num_records//4
+
+    storys, comps1, comps2, ys = _rocstories(os.path.join(data_dir, 'cloze_test_val__spring2016 - cloze_test_ALL_val.csv'), num_records)
+    teX1, teX2, teX3, _ = _rocstories(os.path.join(data_dir, 'cloze_test_test__spring2016 - cloze_test_ALL_test.csv'), num_records)
     tr_storys, va_storys, tr_comps1, va_comps1, tr_comps2, va_comps2, tr_ys, va_ys = train_test_split(storys, comps1, comps2, ys, test_size=n_valid, random_state=seed)
     trX1, trX2, trX3 = [], [], []
     trY = []
