@@ -40,7 +40,7 @@ def shape_list(x):
     deal with dynamic shape in tensorflow cleanly
     """
     ps = x.get_shape().as_list()
-    ts = tf.shape(x)
+    ts = tf.compat.v1.shape(x)
     return [ts[i] if ps[i] is None else ps[i] for i in range(len(ps))]
 
 def np_softmax(x, t=1):
@@ -88,7 +88,7 @@ class ResultLogger(object):
         self.f_log.close()
 
 def find_trainable_variables(key):
-    return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, ".*{}.*".format(key))
+    return tf.compat.v1.get_collection(tf.compat.v1.GraphKeys.TRAINABLE_VARIABLES, ".*{}.*".format(key))
 
 def flatten(outer):
     return [el for inner in outer for el in inner]
@@ -115,7 +115,7 @@ def iter_data(*datas, n_batch=128, truncate=False, verbose=False, max_batches=fl
         n_batches += 1
 
 @function.Defun(
-    python_grad_func=lambda x, dy: tf.convert_to_tensor(dy),
+    python_grad_func=lambda x, dy: tf.compat.v1.convert_to_tensor(dy),
     shape_func=lambda op: [op.inputs[0].get_shape()])
 def convert_gradient_to_tensor(x):
     """force gradient to be a dense tensor
@@ -125,7 +125,7 @@ def convert_gradient_to_tensor(x):
 
 def assign_to_gpu(gpu=0, ps_dev="/device:CPU:0"):
     def _assign(op):
-        node_def = op if isinstance(op, tf.NodeDef) else op.node_def
+        node_def = op if isinstance(op, tf.compat.v1.NodeDef) else op.node_def
         if node_def.op == "Variable":
             return ps_dev
         else:

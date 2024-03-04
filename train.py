@@ -22,10 +22,10 @@ from utils import encode_dataset, flatten, iter_data, find_trainable_variables, 
 tf.compat.v1.disable_eager_execution()
 
 def gelu(x):
-    return 0.5*x*(1+tf.tanh(math.sqrt(2/math.pi)*(x+0.044715*tf.pow(x, 3))))
+    return 0.5*x*(1+tf.compat.v1.tanh(math.sqrt(2/math.pi)*(x+0.044715*tf.pow(x, 3))))
 
 def swish(x):
-    return x*tf.nn.sigmoid(x)
+    return x*tf.compat.v1.nn.sigmoid(x)
 
 opt_fns = {
     'adam':adam,
@@ -45,8 +45,8 @@ lr_schedules = {
 
 def _norm(x, g=None, b=None, e=1e-5, axis=[1]):
     u = tf.compat.v1.reduce_mean(x, axis=axis, keep_dims=True)
-    s = tf.compat.v1.reduce_mean(tf.square(x-u), axis=axis, keep_dims=True)
-    x = (x - u) * tf.rsqrt(s + e)
+    s = tf.compat.v1.reduce_mean(tf.compat.v1.square(x-u), axis=axis, keep_dims=True)
+    x = (x - u) * tf.math.rsqrt(s + e)
     if g is not None and b is not None:
         x = x*g + b
     return x
@@ -65,7 +65,7 @@ def dropout(x, pdrop, train):
 
 def mask_attn_weights(w):
     n = shape_list(w)[-1]
-    b = tf.matrix_band_part(tf.ones([n, n]), -1, 0)
+    b = tf.compat.v1.matrix_band_part(tf.ones([n, n]), -1, 0)
     b = tf.reshape(b, [1, 1, n, n])
     w = w*b + -1e9*(1-b)
     return w
@@ -75,7 +75,7 @@ def _attn(q, k, v, train=False, scale=False):
 
     if scale:
         n_state = shape_list(v)[-1]
-        w = w*tf.rsqrt(tf.cast(n_state, tf.float32))
+        w = w*tf.math.rsqrt(tf.cast(n_state, tf.float32))
 
     w = mask_attn_weights(w)
     w = tf.nn.softmax(w)
@@ -201,7 +201,7 @@ def mgpu_train(*xs):
     xs = (tf.split(x, n_gpu, 0) for x in xs)
     for i, xs in enumerate(zip(*xs)):
         do_reuse = True if i > 0 else None
-        with tf.device(assign_to_gpu(i, "/gpu:0")), tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope(), reuse=do_reuse):
+        with tf.compat.v1.device(assign_to_gpu(i, "/gpu:0")), tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope(), reuse=do_reuse):
             clf_logits, clf_losses, lm_losses = model(*xs, train=True, reuse=do_reuse)
             if lm_coef > 0:
                 train_loss = tf.reduce_mean(clf_losses) + lm_coef*tf.reduce_mean(lm_losses)
@@ -222,7 +222,7 @@ def mgpu_predict(*xs):
     gpu_ops = []
     xs = (tf.split(x, n_gpu, 0) for x in xs)
     for i, xs in enumerate(zip(*xs)):
-        with tf.device(assign_to_gpu(i, "/gpu:0")), tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope(), reuse=True):
+        with tf.compat.v1.device(assign_to_gpu(i, "/gpu:0")), tf.compat.v1.variable_scope(tf.compat.v1.get_variable_scope(), reuse=True):
             clf_logits, clf_losses, lm_losses = model(*xs, train=False, reuse=True)
             gpu_ops.append([clf_logits, clf_losses, lm_losses])
     ops = [tf.concat(op, 0) for op in zip(*gpu_ops)]
