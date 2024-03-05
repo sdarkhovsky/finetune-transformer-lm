@@ -78,7 +78,7 @@ def _attn(q, k, v, train=False, scale=False):
         w = w*tf.math.rsqrt(tf.cast(n_state, tf.float32))
 
     w = mask_attn_weights(w)
-    w = tf.nn.softmax(w)
+    w = tf.compat.v1.nn.softmax(w)
 
     w = dropout(w, attn_pdrop, train)
 
