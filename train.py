@@ -180,7 +180,7 @@ def model(X, M, Y, train=False, reuse=False):
         lm_losses = tf.reduce_sum(lm_losses*M[:, 1:], 1)/tf.reduce_sum(M[:, 1:], 1)
 
         clf_h = tf.reshape(h, [-1, n_embd])
-        pool_idx = tf.cast(tf.argmax(tf.cast(tf.equal(X[:, :, 0], clf_token), tf.float32), 1), tf.int32)
+        pool_idx = tf.cast(tf.compat.v1.argmax(tf.cast(tf.equal(X[:, :, 0], clf_token), tf.float32), 1), tf.int32)
         clf_h = tf.compat.v1.gather(clf_h, tf.range(shape_list(X)[0], dtype=tf.int32)*n_ctx+pool_idx)
 
         clf_h = tf.reshape(clf_h, [-1, 2, n_embd])
